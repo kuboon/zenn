@@ -1,0 +1,12 @@
+{
+  "name": "zenn",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/kuboon/zenn",
+  "author": "kuboon",
+  "license": "NOLICENSE",
+  "private": true,
+  "dependencies": {
+    "zenn-cli": "^0.1.33"
+  }
+}
