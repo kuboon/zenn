@@ -5,6 +5,8 @@ type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["deno", "WebAudio", "WebSocket"]
 published: true
 ---
+https://qiita.com/advent-calendar/2021/deno
+
 # 拍手したい気持ち
 
 オンラインライブで話を聞いている時、聴衆からのフィードバックを得る方法はいくつかありますが、シンプルに拍手だけ出来たらいいなと思いまして。
