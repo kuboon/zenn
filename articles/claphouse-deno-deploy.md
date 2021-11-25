@@ -5,7 +5,7 @@ type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["deno", "WebAudio", "WebSocket"]
 published: true
 ---
-https://qiita.com/advent-calendar/2021/deno
+[Advent Calendar 2021 Deno](https://qiita.com/advent-calendar/2021/deno) 2日目の投稿です。
 
 # 拍手したい気持ち
 
@@ -24,7 +24,8 @@ https://claphouse.kbn.one
 音の再生には WebAudio を使用し、ブラウザ上で単発の拍手を重ね合わせています。
 
 インフラには Deno deploy を使用しています。（てってれーーー
-Deno deploy の BroadcastChannel という鬼つよつよ機能のおかげで、ふつうのサーバーレスでは実現できない WebSocket 接続をあっさり実現できました。すごすぎる。。。
+
+Deno deploy の [BroadcastChannel](https://deno.com/deploy/docs/runtime-broadcast-channel) という鬼つよつよ機能のおかげで、ふつうのサーバーレスでは実現できない WebSocket 接続をあっさり実現できました。すごすぎる。。。
 
 フレームワークには [fresh](https://github.com/lucacasonato/fresh) を採用。
 README に "DO NOT USE" と書いてありますがガン無視して使いました。
@@ -32,7 +33,8 @@ README に "DO NOT USE" と書いてありますがガン無視して使いま�
 aleph.js も使ってみたのですが、 Deno deploy に対応していなかったのだった。
 
 ## WebSocket
-fresh で WebSocket 繋ぐ方法はドキュメントされてませんでしたが、こうすれば動くずやろ、と勘で書いたらちゃんと動きました。凄いですねえ。
+fresh で WebSocket 繋ぐ方法はドキュメントされてませんでしたが、`upgradeWebSocket` すれば動くやろ、と勘で書いたらちゃんと動きました。凄いですねえ。
+接続が来たら BroadcastChannel を開いて通信を相互接続するだけ。簡単すぐる。。。！
 
 ```ts:pages/ws/[uuid].ts
 import { Handlers } from "https://raw.githubusercontent.com/lucacasonato/fresh/main/server.ts";
@@ -45,6 +47,16 @@ export const handler: Handlers = {
 
     const uuid = ctx.match["uuid"];
     // ...
+    const channel = new BroadcastChannel(uuid);
+    channel.onmessage = (ev) => {
+      socket.send(ev.data);
+    };
+    socket.onmessage = (ev) => {
+      channel.postMessage(ev.data);
+    };
+    socket.onclose = () => {
+      channel.close();
+    };
     return response;
   },
 };
@@ -73,6 +85,11 @@ export function play(tag: string) {
 ```
 
 最後の1行、 `start(context.currentTime)` これはめちゃくちゃ重要。この指定により AudioContext の現在再生中のタイミングに効果音を追加することができます。この指定をしないと、音声データの末尾に追加されていくので重なってくれません。
+
+あと、 iOS ではブラウザ表示中に別アプリを開くなどしてブラウザ画面がバックグラウンドへ行くと `AudioContext#status` が強制的に `interrupted` へ遷移し、音が鳴らなくなります。
+通常はその後自動的に `running` へ復帰するのですが、一旦スマホを Lock して再度開いた場合には `status === 'running'` なのに再生されないという謎状況になってしまいました。
+この状況をコード上から判別する方法がわからなかったので、 `interrupted` に入ったら AudioContext を破棄し、復帰時に再生成するようにしたら解決しました。
+同様のサービスを検討中の方はぜひご参考ください。
 
 ## useToggle
 画面上に2つ並んでいるトグルボタンはそれぞれ React 要素です。
